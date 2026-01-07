@@ -1,0 +1,19 @@
+## This package contains driver and controller for controlling Lambda7 haptic device.
+
+## Prequisites
+    -   CHAI3D
+    -   hiredis  (sudo apt install libhiredis-dev)
+    -   Eigen
+    -   redis-server
+
+Before building, please change the redis_client_remote ip address (if using two machines).
+
+## Build instructions.
+
+1. change the "CHAI3D" build path in CMAKE_PREFIX_PATH expression to your own CHAI3D build path.
+
+2. Navigate to "build" folder and build the project. The binary files will stored in "/bin" folder.
+
+## Executing the program
+
+1. open a terminal, navigate to bin folder and run "chai_haptics_redis_driver" first.
