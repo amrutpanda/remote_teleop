@@ -27,6 +27,10 @@ void RedisClient::connect() {
     _connect(hostname,port);
 }
 
+void RedisClient::connect(const std::string hostname, int port) {
+    _connect(hostname,port);
+}
+
 std::unique_ptr<redisReply,redisReplyDeleter>  RedisClient::command(const char* fmt,...){
  // send command to the redis server and receive a reply.
     va_list args;
@@ -815,4 +819,156 @@ void RedisClient::createIntGroupWriteCallback(int _group_num, const std::string&
         // if found. save the callback number to group reads.
         _group_writes[index].second.push_back(n);
     }  
+}
+
+/**
+ *  Functions for batch processing of callbacks.
+*/
+
+void RedisClient::executeBatchAllReadCallbacks()
+{
+    int n = _reads.callback_indices.size();
+    // read in batch from redis.
+    for (int cb_num = 0; cb_num < n; cb_num++)
+    {
+        redisAppendCommand(context_.get(),"GET %s",_reads.keys[cb_num].c_str());
+    }
+    
+    redisReply *reply;
+    for (int callback_num = 0; callback_num < n; callback_num++)
+    {
+        // std::string retval;
+        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR ) 
+            throw std::runtime_error("(callback pipeget )Error while reading value of the key : " + _reads.keys[callback_num]);
+            // std::cout<< "Error while executing SET command for the key" << keys[i];
+        std::unique_ptr<redisReply, redisReplyDeleter> reply_ptr(reply);
+        if (reply_ptr->type == REDIS_REPLY_ERROR || reply_ptr->type == REDIS_REPLY_NIL )
+            throw std::runtime_error("(callback pipeget )Error while in the reply object for the key : "+ _reads.keys[callback_num]);
+        std::string retval(reply->str);
+
+        switch (_reads.dtypes[callback_num])
+        {
+        case STR:
+            {
+                std::string* ptr = (std::string*) _reads.objects[callback_num];
+                *ptr = retval;
+            }
+            break;
+        case INT:
+            {
+                int* ptr = (int*) _reads.objects[callback_num];
+                if (_reads.size_pair[callback_num].first != 0 ) 
+                {
+                    // for (int i = 0; i <= _reads.size_pair[callback_num].first; i++)
+                    // {
+                    //     *(ptr+i) = std::stoi(retval);
+                    // }
+                    StringToIntArray(retval,',',ptr,_reads.size_pair[callback_num].first);
+                }
+                else
+                {
+                    *ptr = std::stoi(retval);
+                }        
+            }
+            break;
+        case DOUBLE:
+            {
+                double* ptr = (double*) _reads.objects[callback_num];
+                if (_reads.size_pair[callback_num].first != 0 ) 
+                {
+                    // for (int i = 0; i <= _reads.size_pair[callback_num].first; i++)
+                    // {
+                    //     *(ptr+i) = std::stoi(retval);
+                    // }
+                    StringToDoubleArray(retval,',',ptr,_reads.size_pair[callback_num].first);
+                }
+                else
+                {
+                    *ptr = std::stod(retval);
+                }
+            }
+            break; 
+        case EIGEN:
+            {
+                double* ptr = (double*) _reads.objects[callback_num];
+                int n = _reads.size_pair[callback_num].first * _reads.size_pair[callback_num].second;
+                // double dbarr[n];
+                StringToDoubleArray(retval,',',ptr,n);
+            }
+            break;
+        
+        default:
+            break;
+        }
+    }
+    
+}
+
+void RedisClient::executeBatchAllWriteCallbacks()
+{
+    int n = _writes.callback_indices.size();
+
+    for (int callback_num = 0; callback_num < n; callback_num++)
+    {
+        std::string str;
+        switch (_writes.dtypes[callback_num])
+        {
+        case STR:
+            {
+                std::string* ptr = (std::string*)_writes.objects[callback_num];
+            }
+            break;
+        case INT:
+            {
+                int* ptr = (int*) _writes.objects[callback_num];
+                if (_writes.size_pair[callback_num].first != 0)
+                {
+                    IntArrayToString(ptr,_writes.size_pair[callback_num].first,str,',');
+                }
+                else
+                {
+                    str = std::to_string(*ptr);
+                }
+            }
+            break;
+        case DOUBLE:
+            {
+                double* ptr = (double*) _writes.objects[callback_num];
+                if (_writes.size_pair[callback_num].first != 0)
+                {
+                    DoubleArrayToString(ptr,_writes.size_pair[callback_num].first,str,',');
+                }
+                else
+                {
+                    str = std::to_string(*ptr); 
+                }
+            }
+            break;
+        case EIGEN:
+            {
+                double* ptr = (double*) _writes.objects[callback_num];
+                int n = _writes.size_pair[callback_num].first * _writes.size_pair[callback_num].second;
+                DoubleArrayToString(ptr,n,str,',');
+            }
+            break;
+        default:
+            break;
+        }
+
+        // set(_writes.keys[callback_num],str);
+        redisAppendCommand(context_.get(), "SET %s %s",_writes.keys[callback_num],str);
+
+    }
+
+    redisReply * reply;
+    for (size_t i = 0; i < _writes.keys.size(); ++i)
+    {
+        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR ) 
+            throw std::runtime_error("(callback pipeset) Error while writing value of the key : " + _writes.keys[i]);
+            // std::cout<< "Error while executing SET command for the key" << keys[i];
+        std::unique_ptr<redisReply, redisReplyDeleter> reply_ptr(reply);
+
+        if (reply_ptr->type == REDIS_REPLY_ERROR)
+            throw std::runtime_error("(callback pipeset) Error while in the reply object for the key : "+ _writes.keys[i]);
+    }
 }

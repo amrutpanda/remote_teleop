@@ -22,6 +22,12 @@ double clampVal(double val, double ll, double ul)
         return val;
 }
 
+/** function to handle delayed communication. Will run in a separate thread with low frequency.
+    Helpful to have an estimate of delay and pass that as an argument.
+    Unit is milliseconds.
+ **/
+void communication(unsigned int delay = 0);
+
 bool runloop = true;
 void sig_handler(int signum) {runloop = false;}
 
@@ -34,17 +40,21 @@ int num_robots = 2;
 int haptic_group = 0;
 int robot_num = 1;
 
+// Create redis client objects.
+// define two redis clients one for local and anther for remote connection.
+RedisClient redis_client, redis_client_remote;
+
 int main(int argc, char const *argv[])
 {
     signal(SIGINT,sig_handler);
-    // define two redis clients one for local and anther for remote connection.
-    RedisClient redis_client;
-    RedisClient redis_client_remote("127.0.0.1", 6379);
+    // RedisClient redis_client;
+    // RedisClient redis_client_remote("127.0.0.1", 6379); // robot side redis server.
 
     // RedisClient redis_client_remote("100.88.10.20");
     
     redis_client.connect();
-    redis_client_remote.connect();
+    redis_client_remote.connect("100.114.124.2");
+    
 
     int device_z_rotation = 90; // relative rotation of haptic w.r.t to robot frame.
     // setup state 
@@ -297,7 +307,6 @@ int main(int argc, char const *argv[])
         }
 
         redis_client.executeAllWriteCallbacks();
-        redis_client_remote.executeAllWriteCallbacks();
     }
     std::cout << "Exited haptic control loop " << std::endl;
     // send zero force and torque to haptic device.    
@@ -309,4 +318,24 @@ int main(int argc, char const *argv[])
 
     timer.printTimerHistory();
     return 0;
+}
+
+void communication(unsigned int delay)
+{
+    double communication_freq = 50;
+    if (delay != 0)
+        communication_freq = 1000/delay;
+    
+    LoopTimer timer;
+    timer.setLoopFrequency(communication_freq);
+    timer.InitializeTimer();
+    while (runloop)
+    {
+        timer.WaitForNextLoop();
+        redis_client_remote.executeAllReadCallbacks();
+        redis_client_remote.executeAllWriteCallbacks();
+    }
+    std::cout << "Exited comm loop" << std::endl;
+    redis_client_remote.set(HAPTIC_READY_STATE_KEY,"0");
+    timer.printTimerHistory();
 }

@@ -61,6 +61,8 @@ public:
 
     std::unique_ptr<redisContext> context_;
     void connect();
+    void connect(const std::string hostname, int port = 6379);
+
     std::unique_ptr<redisReply,redisReplyDeleter> reply_;
     
     std::unique_ptr<redisReply, redisReplyDeleter> command(const char* fmt,...);
@@ -127,6 +129,9 @@ public:
 
     void executeGroupReadCallbacks(int _group_num);
     void executeGroupWriteCallbacks(int _group_num);
+
+    void executeBatchAllReadCallbacks();
+    void executeBatchAllWriteCallbacks();
 
 
     void StringToIntArray(std::string& str,char delimiter, int* intarr, int arr_len);
