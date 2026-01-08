@@ -118,11 +118,11 @@ std::vector<std::string> RedisClient::pipeget(const std::vector<std::string> &ke
         redisAppendCommand(context_.get(), "GET %s",keys[i].c_str());
     }
     // Get and store the reply in a vector.
-    redisReply *reply;
+    redisReply *reply = nullptr;
     int ret;
     for (size_t i = 0; i < keys.size(); ++i)
     {
-        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR ) 
+        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR || !reply ) 
             throw std::runtime_error("Error while reading value of the key : " + keys[i]);
             // std::cout<< "Error while executing SET command for the key" << keys[i];
         std::unique_ptr<redisReply, redisReplyDeleter> reply_ptr(reply);
@@ -139,11 +139,11 @@ void RedisClient::pipeget(const std::vector<std::string> &keys, std::vector<std:
     {
         redisAppendCommand(context_.get(), "GET %s",keys[i].c_str());
     }
-    redisReply *reply;
+    redisReply *reply = nullptr;
     int ret;
     for (size_t i = 0; i < keys.size(); ++i)
     {
-        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR ) 
+        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR || !reply ) 
             throw std::runtime_error("(Overloaded pipeset )Error while reading value of the key : " + keys[i]);
             // std::cout<< "Error while executing SET command for the key" << keys[i];
         std::unique_ptr<redisReply, redisReplyDeleter> reply_ptr(reply);
@@ -838,13 +838,13 @@ void RedisClient::executeBatchAllReadCallbacks()
     for (int callback_num = 0; callback_num < n; callback_num++)
     {
         // std::string retval;
-        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR ) 
+        if (redisGetReply(context_.get(), (void**) &reply) == REDIS_ERR || reply == nullptr ) 
             throw std::runtime_error("(callback pipeget )Error while reading value of the key : " + _reads.keys[callback_num]);
             // std::cout<< "Error while executing SET command for the key" << keys[i];
         std::unique_ptr<redisReply, redisReplyDeleter> reply_ptr(reply);
         if (reply_ptr->type == REDIS_REPLY_ERROR || reply_ptr->type == REDIS_REPLY_NIL )
             throw std::runtime_error("(callback pipeget )Error while in the reply object for the key : "+ _reads.keys[callback_num]);
-        std::string retval(reply->str);
+        std::string retval(reply->str, reply->len);
 
         switch (_reads.dtypes[callback_num])
         {
@@ -915,7 +915,8 @@ void RedisClient::executeBatchAllWriteCallbacks()
         {
         case STR:
             {
-                std::string* ptr = (std::string*)_writes.objects[callback_num];
+                std::string* ptr = static_cast<std::string*>(_writes.objects[callback_num]);
+                str = *ptr;
             }
             break;
         case INT:
@@ -956,7 +957,7 @@ void RedisClient::executeBatchAllWriteCallbacks()
         }
 
         // set(_writes.keys[callback_num],str);
-        redisAppendCommand(context_.get(), "SET %s %s",_writes.keys[callback_num],str);
+        redisAppendCommand(context_.get(), "SET %s %s",_writes.keys[callback_num].c_str(),str.c_str());
 
     }
 

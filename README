@@ -14,6 +14,13 @@ Before building, please change the redis_client_remote ip address (if using two 
 
 2. Navigate to "build" folder and build the project. The binary files will stored in "/bin" folder.
 
+3. commands are as follows
+    $ cmake ..
+    $ make 
+
 ## Executing the program
 
 1. open a terminal, navigate to bin folder and run "chai_haptics_redis_driver" first.
+2. Ensure to change redis.conf so that redis_server can be exposed to internet.
+   Change the remote redis client ip and build the project again.
+3. Open a new terminal and execute the haptic_controller program.
