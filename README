@@ -5,7 +5,7 @@
     -   hiredis  (sudo apt install libhiredis-dev)
     -   Eigen
     -   redis-server
-
+    -   Phantom hd driver and OpenHaptic 3.4 installed to control touch and phantom devices.
 Before building, please change the redis_client_remote ip address (if using two machines).
 
 ## Build instructions.
@@ -22,7 +22,8 @@ Before building, please change the redis_client_remote ip address (if using two 
 
 ## Executing the program
 
-1. open a terminal, navigate to bin folder and run "chai_haptics_redis_driver" first.
+1. open a terminal, navigate to bin folder and run "chai_haptics_redis_driver" first or 
+    "hd_haptics_redis_driver" for phatom devices.
 2. Ensure to change redis.conf so that redis_server can be exposed to internet.
    Change the remote redis client ip and build the project again.
 3. Open a new terminal and execute the haptic_controller program.
