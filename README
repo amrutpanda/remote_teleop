@@ -15,8 +15,10 @@ Before building, please change the redis_client_remote ip address (if using two 
 2. Navigate to "build" folder and build the project. The binary files will stored in "/bin" folder.
 
 3. commands are as follows
+```bash
     $ cmake ..
     $ make 
+```
 
 ## Executing the program
 

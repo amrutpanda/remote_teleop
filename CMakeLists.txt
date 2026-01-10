@@ -19,3 +19,9 @@ target_link_libraries(chai_haptics_redis_driver ${CHAI3D_LIBRARIES} ${HIREDIS_LI
 
 add_executable(haptic_controller src/haptic_controller.cpp src/HapticController.cpp src/redisclient.cpp)
 target_link_libraries(haptic_controller ${CHAI3D_LIBRARIES} ${HIREDIS_LIB})
+
+add_executable(hd_haptics_redis_driver src/hd_haptics_redis_driver.cpp src/hd_haptics_helper.cpp src/redisclient.cpp)
+target_link_libraries(hd_haptics_redis_driver -lHD ${HIREDIS_LIB})
+
+add_executable(benchmarking src/benchmarking.cpp src/redisclient.cpp)
+target_link_libraries(benchmarking ${CHAI3D_LIBRARIES} ${HIREDIS_LIB})

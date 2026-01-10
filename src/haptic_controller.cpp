@@ -36,7 +36,7 @@ int haptic_ready = 0;
 int robot_ready = 0;
 
 // no. of robots to be controlled.
-int num_robots = 2;
+int num_robots = 1;
 int haptic_group = 0;
 int robot_num = 1;
 
@@ -147,22 +147,22 @@ int main(int argc, char const *argv[])
     Eigen::Vector3d haptic_center = Eigen::Vector3d::Zero();
 
     // create a redis_client group for interacting with haptic driver.
-    // read keys.
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_POSITION_KEY_SUFFIX,device_num),teleop_task->_current_position_device);
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_ROTATION_KEY_SUFFIX,device_num),teleop_task->_current_rotation_device);
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_LINEAR_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_trans_velocity_device);
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_ANGULAR_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_rot_velocity_device);
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_SENSED_FORCE_KEY_SUFFIX,device_num),teleop_task->_sensed_force_device);
-    redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_SENSED_TORQUE_KEY_SUFFIX,device_num),teleop_task->_sensed_torque_device);
-    redis_client.createDoubleGroupReadCallback(haptic_group,createRedisKey(DEVICE_GRIPPER_POSITION_KEY_SUFFIX,device_num),teleop_task->_current_gripper_position_device,1);
-    redis_client.createDoubleGroupReadCallback(haptic_group,createRedisKey(DEVICE_GRIPPER_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_gripper_velocity_device,1);
+    // // read keys.
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_POSITION_KEY_SUFFIX,device_num),teleop_task->_current_position_device);
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_ROTATION_KEY_SUFFIX,device_num),teleop_task->_current_rotation_device);
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_LINEAR_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_trans_velocity_device);
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_ANGULAR_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_rot_velocity_device);
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_SENSED_FORCE_KEY_SUFFIX,device_num),teleop_task->_sensed_force_device);
+    // redis_client.createEigenGroupReadCallback(haptic_group,createRedisKey(DEVICE_SENSED_TORQUE_KEY_SUFFIX,device_num),teleop_task->_sensed_torque_device);
+    // redis_client.createDoubleGroupReadCallback(haptic_group,createRedisKey(DEVICE_GRIPPER_POSITION_KEY_SUFFIX,device_num),teleop_task->_current_gripper_position_device,1);
+    // redis_client.createDoubleGroupReadCallback(haptic_group,createRedisKey(DEVICE_GRIPPER_VELOCITY_KEY_SUFFIX,device_num),teleop_task->_current_gripper_velocity_device,1);
 
-    // write  robot keys.
-    redis_client.createEigenGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_FORCE_KEY_SUFFIX,device_num),teleop_task->_commanded_force_device);
-    redis_client.createEigenGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_TORQUE_KEY_SUFFIX,device_num),teleop_task->_commanded_torque_device);
-    redis_client.createDoubleGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_GRIPPER_FORCE_KEY_SUFFIX,device_num),teleop_task->_commanded_gripper_force_device,1);
-    // read haptic ready state.
-    redis_client_remote.createIntGroupWriteCallback(haptic_group,HAPTIC_READY_STATE_KEY,haptic_ready,1);
+    // // write  robot keys.
+    // redis_client.createEigenGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_FORCE_KEY_SUFFIX,device_num),teleop_task->_commanded_force_device);
+    // redis_client.createEigenGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_TORQUE_KEY_SUFFIX,device_num),teleop_task->_commanded_torque_device);
+    // redis_client.createDoubleGroupWriteCallback(haptic_group,createRedisKey(DEVICE_COMMANDED_GRIPPER_FORCE_KEY_SUFFIX,device_num),teleop_task->_commanded_gripper_force_device,1);
+    // // read haptic ready state.
+    // redis_client_remote.createIntGroupWriteCallback(haptic_group,HAPTIC_READY_STATE_KEY,haptic_ready,1);
    
     /* ------------------------------------------------------------------ */
     // Objects to read from redis server.
@@ -210,6 +210,9 @@ int main(int argc, char const *argv[])
     // redis_client.createIntGroupReadCallback(3,STATE_TRANSITION_KEY,state,1);
     // redis_client.createIntGroupReadCallback(3,ROBOT_NAME_KEY,robot_num,1);
 
+
+    // start the communication thread.
+    std::thread comm(communication,100);
     // create timer.
     LoopTimer timer;
     timer.setLoopFrequency(1000);
@@ -221,7 +224,8 @@ int main(int argc, char const *argv[])
         // make the state obtain from redis as prev state.
         prev_state = state;
         // read from redis.
-        redis_client.executeAllReadCallbacks();
+        // redis_client.executeAllReadCallbacks();
+        redis_client.executeBatchAllReadCallbacks();
         // use gripper as switch.
         // teleop_task->UseGripperAsSwitch();
         gripper_state_prev = gripper_state;
@@ -292,6 +296,11 @@ int main(int argc, char const *argv[])
             // }
             
             // std::cout << "desired torque: " << desired_torque.transpose() << std::endl;
+
+            // No haptic feedback.
+            desired_force.setZero();
+            desired_torque.setZero();
+
             // send desired force to command force device.
             teleop_task->_commanded_force_device = desired_force;
             teleop_task->_commanded_torque_device = desired_torque; // ignoring force feedback at this moment.
@@ -306,7 +315,8 @@ int main(int argc, char const *argv[])
             teleop_task->computeHapticCommand6d(_robot_proxy,_robot_proxy_rot);
         }
 
-        redis_client.executeAllWriteCallbacks();
+        // redis_client.executeAllWriteCallbacks();
+        redis_client.executeBatchAllWriteCallbacks();
     }
     std::cout << "Exited haptic control loop " << std::endl;
     // send zero force and torque to haptic device.    
@@ -316,6 +326,9 @@ int main(int argc, char const *argv[])
     redis_client.setEigenMatrix(createRedisKey(DEVICE_COMMANDED_TORQUE_KEY_SUFFIX,device_num),_zero_value_vector);
     redis_client.set(createRedisKey(DEVICE_COMMANDED_GRIPPER_FORCE_KEY_SUFFIX,device_num),std::to_string(_zero_value));
 
+    // join the communication thread.
+    comm.join();
+
     timer.printTimerHistory();
     return 0;
 }
@@ -324,7 +337,7 @@ void communication(unsigned int delay)
 {
     double communication_freq = 50;
     if (delay != 0)
-        communication_freq = 1000/delay;
+        communication_freq = 1000/(double)delay;
     
     LoopTimer timer;
     timer.setLoopFrequency(communication_freq);
@@ -332,10 +345,10 @@ void communication(unsigned int delay)
     while (runloop)
     {
         timer.WaitForNextLoop();
-        redis_client_remote.executeAllReadCallbacks();
-        redis_client_remote.executeAllWriteCallbacks();
+        redis_client_remote.executeBatchAllReadCallbacks();
+        redis_client_remote.executeBatchAllWriteCallbacks();
     }
     std::cout << "Exited comm loop" << std::endl;
     redis_client_remote.set(HAPTIC_READY_STATE_KEY,"0");
-    timer.printTimerHistory();
+    // timer.printTimerHistory();
 }

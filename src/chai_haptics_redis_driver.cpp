@@ -204,7 +204,8 @@ int main(int argc, char const *argv[])
         while (runloop)
         {
             timer.WaitForNextLoop();
-            redis_client->executeAllReadCallbacks();
+            // redis_client->executeAllReadCallbacks();
+            redis_client->executeBatchAllReadCallbacks();
             // continue;
             if (swap_devices(0) != 0 || swap_devices(1) != 0) {
 				// cout << "swapping devices" << endl;
@@ -272,7 +273,8 @@ int main(int argc, char const *argv[])
 				sensed_torques.at(i) = sensed_torque.eigen();
 
             }
-            redis_client->executeAllWriteCallbacks();
+            // redis_client->executeAllWriteCallbacks();
+            redis_client->executeBatchAllWriteCallbacks();
         }
         
     }

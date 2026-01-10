@@ -133,6 +133,7 @@ public:
     void executeBatchAllReadCallbacks();
     void executeBatchAllWriteCallbacks();
 
+    void executeBatchAllReadWriteCallbacks();
 
     void StringToIntArray(std::string& str,char delimiter, int* intarr, int arr_len);
     void IntArrayToString(int* intarr, int arr_len, std::string& str, char delimiter);
