@@ -206,15 +206,15 @@ int RedisClient::createIntReadCallback( const std::string& key, int* object, int
     _reads.callback_indices.push_back(n);
     _reads.dtypes.push_back(INT);
     _reads.keys.push_back(key);
-    _reads.objects.push_back(&object);
+    _reads.objects.push_back(object);
     _reads.size_pair.push_back(std::make_pair(arr_size,0));
     return n;
 }
 
-//  int createIntReadCallback( const std::string& key, int& object, int arr_size)
-//  {
-//     return createIntReadCallback(key,&object,1);
-//  }
+ int RedisClient::createIntReadCallback( const std::string& key, int& object, int arr_size)
+ {
+    return createIntReadCallback(key,&object,1);
+ }
 
 int RedisClient::createDoubleReadCallback( const std::string& key, double* object, int arr_size) {
     int n = _reads.callback_indices.size();
@@ -239,7 +239,7 @@ int RedisClient::createDoubleReadCallback( const std::string& key, double* objec
     _reads.callback_indices.push_back(n);
     _reads.dtypes.push_back(DOUBLE);
     _reads.keys.push_back(key);
-    _reads.objects.push_back(&object);
+    _reads.objects.push_back(object);
     _reads.size_pair.push_back(std::make_pair(arr_size,0));
     return n;
 }
@@ -347,7 +347,7 @@ int RedisClient::createStringWriteCallback( const std::string& key, std::string&
     return n;
 }
 
-int RedisClient::createIntWriteCallback( const std::string& key, int& object, int arr_size) {
+int RedisClient::createIntWriteCallback( const std::string& key, int* object, int arr_size) {
     int n = _writes.callback_indices.size();
 
     bool key_found = false;
@@ -370,12 +370,17 @@ int RedisClient::createIntWriteCallback( const std::string& key, int& object, in
     _writes.callback_indices.push_back(n);
     _writes.dtypes.push_back(INT);
     _writes.keys.push_back(key);
-    _writes.objects.push_back(&object);
+    _writes.objects.push_back(object);
     _writes.size_pair.push_back(std::make_pair(arr_size,0));
     return n;
 }
 
-int RedisClient::createDoubleWriteCallback( const std::string& key, double& object, int arr_size) {
+int RedisClient::createIntWriteCallback( const std::string& key, int& object, int arr_size)
+{
+    return createIntWriteCallback(key,&object,1);
+}
+
+int RedisClient::createDoubleWriteCallback( const std::string& key, double* object, int arr_size) {
     int n = _writes.callback_indices.size();
 
     bool key_found = false;
@@ -398,9 +403,14 @@ int RedisClient::createDoubleWriteCallback( const std::string& key, double& obje
     _writes.callback_indices.push_back(n);
     _writes.dtypes.push_back(DOUBLE);
     _writes.keys.push_back(key);
-    _writes.objects.push_back(&object);
+    _writes.objects.push_back(object);
     _writes.size_pair.push_back(std::make_pair(arr_size,0));
     return n;
+}
+
+int RedisClient::createDoubleWriteCallback( const std::string& key, double& object, int arr_size)
+{
+    return createDoubleWriteCallback(key,&object,1);
 }
 
 void RedisClient::executeWriteCallback(int callback_num) {
@@ -741,7 +751,12 @@ void RedisClient::createDoubleGroupReadCallback(int _group_num, const std::strin
     }  
 }
 
-void RedisClient::createDoubleGroupWriteCallback(int _group_num, const std::string& key, double& object, int arr_size)
+void RedisClient::createDoubleGroupReadCallback(int _group_num, const std::string& key, double& object, int arr_size)
+{
+    createDoubleGroupReadCallback(_group_num,key,&object,1);
+}
+
+void RedisClient::createDoubleGroupWriteCallback(int _group_num, const std::string& key, double* object, int arr_size)
 {
     int n = createDoubleWriteCallback(key,object,arr_size);
      // find the group_num from _group read.
@@ -771,7 +786,12 @@ void RedisClient::createDoubleGroupWriteCallback(int _group_num, const std::stri
     }  
 }
 
-void RedisClient::createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size)
+void RedisClient::createDoubleGroupWriteCallback(int _group_num, const std::string& key, double& object, int arr_size)
+{
+    createDoubleGroupWriteCallback(_group_num,key,&object,1);
+}
+
+void RedisClient::createIntGroupReadCallback(int _group_num, const std::string& key, int* object, int arr_size)
 {
     int n = createIntReadCallback(key,object,arr_size);
      // find the group_num from _group read.
@@ -801,7 +821,12 @@ void RedisClient::createIntGroupReadCallback(int _group_num, const std::string& 
     }  
 }
 
-void RedisClient::createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size)
+void RedisClient::createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size)
+{
+    createIntGroupReadCallback(_group_num,key,&object,1);
+}
+
+void RedisClient::createIntGroupWriteCallback(int _group_num, const std::string& key, int* object, int arr_size)
 {
     int n = createIntWriteCallback(key,object,arr_size);
      // find the group_num from _group read.
@@ -829,6 +854,11 @@ void RedisClient::createIntGroupWriteCallback(int _group_num, const std::string&
         // if found. save the callback number to group reads.
         _group_writes[index].second.push_back(n);
     }  
+}
+
+void RedisClient::createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size)
+{
+    createIntGroupWriteCallback(_group_num,key,&object,1);
 }
 
 /**

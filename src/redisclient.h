@@ -108,27 +108,32 @@ public:
      * @param arr_len: size of the array if you want to write a array.
      *                 For a single value arr_len = 1
     */
-    int createIntWriteCallback( const std::string& key, int& object, int arr_size);
-    // int createIntWriteCallback( const std::string& key, int& object, int arr_size);
+    int createIntWriteCallback( const std::string& key, int* object, int arr_size);
+    int createIntWriteCallback( const std::string& key, int& object, int arr_size=1);
     /**
      * @brief creates a callbac for writing double value or array.
      * @param arr_len: size of the array if you want to write a array.
      *                 For a single value arr_len = 1
     */
-    int createDoubleWriteCallback( const std::string& key, double& object, int arr_size);
-    // int createDoubleWriteCallback( const std::string& key, double& object, int arr_size);
+    int createDoubleWriteCallback( const std::string& key, double* object, int arr_size);
+    int createDoubleWriteCallback( const std::string& key, double& object, int arr_size=1);
     // template< typename _Scalar,int rows, int cols, int options, int maxrows, int maxcols >
     // int createEigenWriteCallback(const std::string& key, Eigen::Matrix<_Scalar, rows, cols>* object);
 
     template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
     int createEigenWriteCallback(const std::string& key, Eigen::Matrix< _Scalar,_Rows, _Cols, _Options,_MaxRows,_MaxCols>& object);
 
-    void createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size);
-    void createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size);
+    void createIntGroupReadCallback(int _group_num, const std::string& key, int* object, int arr_size);
+    void createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size=1);
+
+    void createIntGroupWriteCallback(int _group_num, const std::string& key, int* object, int arr_size);
+    void createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size=1);
 
     void createDoubleGroupReadCallback(int _group_num, const std::string& key, double* object, int arr_size);
-    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double& object, int arr_size);
-
+    void createDoubleGroupReadCallback(int _group_num, const std::string& key, double& object, int arr_size=1);
+    
+    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double* object, int arr_size);
+    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double& object, int arr_size=1);
 
     void executeReadCallback(int callback_number);
     void executeWriteCallback( int callback_number);
