@@ -495,15 +495,25 @@ void RedisClient::StringToIntArray(std::string& str, char delimiter, int* intarr
 }
 
 void RedisClient::IntArrayToString(int* intarr, int arr_len, std::string& str, char delimiter) {
-    std::string tstr = "";
-    int* ptr = intarr;
-    for (size_t i = 0; i < arr_len; i++)
+    // std::string tstr = "";
+    // int* ptr = intarr;
+    // for (size_t i = 0; i < arr_len; i++)
+    // {
+    //     tstr = tstr + std::to_string(*ptr) + delimiter;
+    //     ptr++;
+    // }
+    // tstr.erase(tstr.end() -1);
+    // str = tstr;
+
+    str.clear();
+    str.reserve( 17 * arr_len + 5);
+    char buffer[16];
+    for (int i = 0; i < arr_len; i++)
     {
-        tstr = tstr + std::to_string(*ptr) + delimiter;
-        ptr++;
+        if (i > 0) str.push_back(delimiter);
+        auto result = std::to_chars(buffer, buffer+sizeof(buffer),intarr[i]);
+        str.append(buffer, result.ptr - buffer);
     }
-    tstr.erase(tstr.end() -1);
-    str = tstr;
     
 }
 
@@ -534,15 +544,25 @@ void RedisClient::StringToDoubleArray(std::string& str, char delimiter, double* 
 }
 
 void RedisClient::DoubleArrayToString(double* dbarr, int arr_len, std::string& str, char delimiter) {
-    std::string tstr = "";
-    double* ptr = dbarr;
-    for (size_t i = 0; i < arr_len; i++)
+    // std::string tstr = "";
+    // double* ptr = dbarr;
+    // for (size_t i = 0; i < arr_len; i++)
+    // {
+    //     tstr = tstr + std::to_string(*ptr) + delimiter;
+    //     ptr++;
+    // }
+    // tstr.erase(tstr.end() -1);
+    // str = tstr;
+    
+    str.clear();
+    str.reserve( 33 * arr_len + 5);
+    char buffer[32];
+    for (int i = 0; i < arr_len; i++)
     {
-        tstr = tstr + std::to_string(*ptr) + delimiter;
-        ptr++;
+        if (i > 0) str.push_back(delimiter);
+        auto result = std::to_chars(buffer, buffer+sizeof(buffer),dbarr[i]);
+        str.append(buffer, result.ptr - buffer);
     }
-    tstr.erase(tstr.end() -1);
-    str = tstr;
     
 }
 

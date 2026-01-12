@@ -4,6 +4,7 @@
 #include <hiredis/hiredis.h>
 #include <chrono>
 #include <vector>
+#include <charconv>
 
 #define _EIGEN 1
 
