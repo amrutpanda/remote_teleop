@@ -183,7 +183,7 @@ int RedisClient::createStringReadCallback( const std::string& key, std::string& 
     return n;
 }
 
-int RedisClient::createIntReadCallback( const std::string& key, int& object, int arr_size) {
+int RedisClient::createIntReadCallback( const std::string& key, int* object, int arr_size) {
     int n = _reads.callback_indices.size();
 
     bool key_found = false;
@@ -211,7 +211,12 @@ int RedisClient::createIntReadCallback( const std::string& key, int& object, int
     return n;
 }
 
-int RedisClient::createDoubleReadCallback( const std::string& key, double& object, int arr_size) {
+//  int createIntReadCallback( const std::string& key, int& object, int arr_size)
+//  {
+//     return createIntReadCallback(key,&object,1);
+//  }
+
+int RedisClient::createDoubleReadCallback( const std::string& key, double* object, int arr_size) {
     int n = _reads.callback_indices.size();
 
     bool key_found = false;
@@ -237,6 +242,11 @@ int RedisClient::createDoubleReadCallback( const std::string& key, double& objec
     _reads.objects.push_back(&object);
     _reads.size_pair.push_back(std::make_pair(arr_size,0));
     return n;
+}
+
+int RedisClient::createDoubleReadCallback( const std::string& key, double& object, int arr_size)
+{
+    return createDoubleReadCallback(key,&object,1);
 }
 
 
@@ -701,7 +711,7 @@ void RedisClient::executeGroupWriteCallbacks(int _group_num)
     
 }
 
-void RedisClient::createDoubleGroupReadCallback(int _group_num, const std::string& key, double& object, int arr_size)
+void RedisClient::createDoubleGroupReadCallback(int _group_num, const std::string& key, double* object, int arr_size)
 {
     int n = createDoubleReadCallback(key,object,arr_size);
      // find the group_num from _group read.

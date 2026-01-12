@@ -12,6 +12,7 @@
 
 #include <chai_haptics_driver_redis_keys.h>
 #include <LoopTimer.h>
+#include <csignal>
 
 using namespace ChaiHapticDriverKeys;
 using namespace PhantomDevice;

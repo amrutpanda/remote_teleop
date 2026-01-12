@@ -25,3 +25,6 @@ target_link_libraries(hd_haptics_redis_driver -lHD ${HIREDIS_LIB})
 
 add_executable(benchmarking src/benchmarking.cpp src/redisclient.cpp)
 target_link_libraries(benchmarking ${CHAI3D_LIBRARIES} ${HIREDIS_LIB})
+
+add_executable(roll_reader src/roll_reader.cpp src/redisclient.cpp)
+target_link_libraries(roll_reader ${CHAI3D_LIBRARIES} ${HIREDIS_LIB})
