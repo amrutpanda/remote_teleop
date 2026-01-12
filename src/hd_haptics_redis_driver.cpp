@@ -112,10 +112,11 @@ int main(int argc, char const *argv[])
     {
         while (runloop && timer.WaitForNextLoop())
         {
-            redis_client->executeAllReadCallbacks();
-            // handler._applied_force.setZero();
-            // handler._applied_torque.setZero();
-            redis_client->executeAllWriteCallbacks();
+            // redis_client->executeAllReadCallbacks();
+            // // handler._applied_force.setZero();
+            // // handler._applied_torque.setZero();
+            // redis_client->executeAllWriteCallbacks();
+            redis_client->executeBatchAllReadWriteCallbacks();
         }
         
     }
