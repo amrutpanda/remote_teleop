@@ -12,6 +12,7 @@
 
 #include <chai_haptics_driver_redis_keys.h>
 #include <LoopTimer.h>
+#include <csignal>
 
 using namespace ChaiHapticDriverKeys;
 using namespace PhantomDevice;
@@ -112,10 +113,11 @@ int main(int argc, char const *argv[])
     {
         while (runloop && timer.WaitForNextLoop())
         {
-            redis_client->executeAllReadCallbacks();
-            // handler._applied_force.setZero();
-            // handler._applied_torque.setZero();
-            redis_client->executeAllWriteCallbacks();
+            // redis_client->executeAllReadCallbacks();
+            // // handler._applied_force.setZero();
+            // // handler._applied_torque.setZero();
+            // redis_client->executeAllWriteCallbacks();
+            redis_client->executeBatchAllReadWriteCallbacks();
         }
         
     }

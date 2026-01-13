@@ -2,9 +2,9 @@
 // #define _LOOPTIMER_H
 #include <iostream>
 #include <chrono>
-#include <signal.h>
+// #include <signal.h>
 #include <ctime>
-#include <unistd.h>
+// #include <unistd.h>
 #include <thread>
 
 bool _loop_exit = true;

@@ -3,6 +3,7 @@
 // #include <teleop_redis_keys.h>
 #include <redisclient.h>
 #include <LoopTimer.h>
+#include <csignal>
 
 enum State {
     INIT = 0,

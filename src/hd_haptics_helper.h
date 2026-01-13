@@ -160,6 +160,7 @@ namespace PhantomDevice
 
         Eigen::Vector3d _applied_force;
         Eigen::Vector3d _applied_torque;
+
         void ClampValue(Eigen::Vector3d& _v, double lv, double uv);
 
         // device constants.

@@ -4,7 +4,14 @@
 #include <hiredis/hiredis.h>
 #include <chrono>
 #include <vector>
+#include <charconv>
+
+#define _EIGEN 1
+
+#if _EIGEN == 1
 #include <eigen3/Eigen/Dense>
+#endif
+
 
 // custom deleter for deallocating rediscontext object.
 struct redisContextDeleter{
@@ -83,13 +90,15 @@ public:
      * @param arr_len: size of the array if you want to read a array.
      *                 For a single value arr_len = 1
     */
-    int createIntReadCallback( const std::string& key, int& object, int arr_size);
+    int createIntReadCallback( const std::string& key, int* object, int arr_size);
+    int createIntReadCallback( const std::string& key, int& object, int arr_size = 1);
     /**
      * @brief creates a callback for reading double value or array.
      * @param arr_len: size of the array if you want to read a array.
      *                 For a single value arr_len = 1
     */
-    int createDoubleReadCallback( const std::string& key, double& object, int arr_size);
+    int createDoubleReadCallback( const std::string& key, double* object, int arr_size);
+    int createDoubleReadCallback( const std::string& key, double& object, int arr_size=1);
     
     template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
     int createEigenReadCallback(const std::string& key, Eigen::Matrix<_Scalar,_Rows, _Cols, _Options, _MaxRows, _MaxCols >& object);
@@ -100,26 +109,32 @@ public:
      * @param arr_len: size of the array if you want to write a array.
      *                 For a single value arr_len = 1
     */
-    int createIntWriteCallback( const std::string& key, int& object, int arr_size);
+    int createIntWriteCallback( const std::string& key, int* object, int arr_size);
+    int createIntWriteCallback( const std::string& key, int& object, int arr_size=1);
     /**
      * @brief creates a callbac for writing double value or array.
      * @param arr_len: size of the array if you want to write a array.
      *                 For a single value arr_len = 1
     */
-    int createDoubleWriteCallback( const std::string& key, double& object, int arr_size);
-
+    int createDoubleWriteCallback( const std::string& key, double* object, int arr_size);
+    int createDoubleWriteCallback( const std::string& key, double& object, int arr_size=1);
     // template< typename _Scalar,int rows, int cols, int options, int maxrows, int maxcols >
     // int createEigenWriteCallback(const std::string& key, Eigen::Matrix<_Scalar, rows, cols>* object);
 
     template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
     int createEigenWriteCallback(const std::string& key, Eigen::Matrix< _Scalar,_Rows, _Cols, _Options,_MaxRows,_MaxCols>& object);
 
-    void createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size);
-    void createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size);
+    void createIntGroupReadCallback(int _group_num, const std::string& key, int* object, int arr_size);
+    void createIntGroupReadCallback(int _group_num, const std::string& key, int& object, int arr_size=1);
 
-    void createDoubleGroupReadCallback(int _group_num, const std::string& key, double& object, int arr_size);
-    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double& object, int arr_size);
+    void createIntGroupWriteCallback(int _group_num, const std::string& key, int* object, int arr_size);
+    void createIntGroupWriteCallback(int _group_num, const std::string& key, int& object, int arr_size=1);
 
+    void createDoubleGroupReadCallback(int _group_num, const std::string& key, double* object, int arr_size);
+    void createDoubleGroupReadCallback(int _group_num, const std::string& key, double& object, int arr_size=1);
+    
+    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double* object, int arr_size);
+    void createDoubleGroupWriteCallback(int _group_num,const std::string& key, double& object, int arr_size=1);
 
     void executeReadCallback(int callback_number);
     void executeWriteCallback( int callback_number);
@@ -141,6 +156,8 @@ public:
     void StringToDoubleArray(std::string& str,char delimiter, double* dbarr, int arr_len);
     void DoubleArrayToString(double* dbarr, int arr_len, std::string& str, char delimiter);
 
+    #if _EIGEN == 1
+
     template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
     void getEigenMatrix(const std::string& key, const Eigen::Matrix< _Scalar,_Rows, _Cols, _Options,_MaxRows,_MaxCols>& matrix);
     
@@ -152,7 +169,8 @@ public:
 
     template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
     void createEigenGroupWriteCallback(int _group_num, const std::string& key,Eigen::Matrix< _Scalar,_Rows, _Cols, _Options,_MaxRows,_MaxCols>& matrix);
-    
+
+    #endif
     RedisClient(std::string hostname = "127.0.0.1", int port = 6379);
     // ~RedisClient();
 };
@@ -165,6 +183,7 @@ public:
 // {
 // }
 
+#if _EIGEN == 1
 
 template< typename _Scalar,int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols >
 int RedisClient::createEigenReadCallback(const std::string& key, Eigen::Matrix<_Scalar,_Rows, _Cols, _Options,_MaxRows,_MaxCols>& object) {
@@ -388,3 +407,4 @@ void RedisClient::createEigenGroupWriteCallback(int _group_num, const std::strin
         _group_writes[index].second.push_back(n);
     }  
 }
+#endif
