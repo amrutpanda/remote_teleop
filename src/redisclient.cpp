@@ -469,29 +469,41 @@ void RedisClient::executeWriteCallback(int callback_num) {
 // ********************** data type converters **********************
 
 void RedisClient::StringToIntArray(std::string& str, char delimiter, int* intarr, int arr_len) {
-    std::string tstr = "";
-    int* ptr = intarr;
-    // char delimiter = '.';
-    int len = 0;
-    for (size_t i = 0; i < str.size(); i++)
+    // std::string tstr = "";
+    // int* ptr = intarr;
+    // // char delimiter = '.';
+    // int len = 0;
+    // for (size_t i = 0; i < str.size(); i++)
+    // {
+    //     if(str[i] == delimiter )
+    //     {
+    //         *ptr = std::stoi(tstr);
+    //         len += 1;
+    //         ptr++;
+    //         tstr = "";
+    //     }
+    //     else   
+    //         tstr += str[i];
+    // }
+
+    // *ptr = std::stoi(tstr);
+    // len += 1;
+
+    // if (len != arr_len )
+    //     throw std::runtime_error("Number of elements to convert to integer doesn't match the given array length. " \
+    //                                + std::to_string(len)+" != " + std::to_string(arr_len));   
+    
+    auto sptr = str.data();
+    auto eptr = sptr + str.length();
+
+    for (int i = 0; i < arr_len; i++)
     {
-        if(str[i] == delimiter )
-        {
-            *ptr = std::stoi(tstr);
-            len += 1;
-            ptr++;
-            tstr = "";
-        }
-        else   
-            tstr += str[i];
+        auto tptr = sptr;
+        while (tptr < eptr && *tptr != delimiter) ++tptr;
+        auto result = std::from_chars(sptr, tptr, intarr[i]);
+        assert(result.ec == std::errc{} && "from_chars in StringToIntArray failed");
+        sptr = tptr + 1;
     }
-
-    *ptr = std::stoi(tstr);
-    len += 1;
-
-    if (len != arr_len )
-        throw std::runtime_error("Number of elements to convert to integer doesn't match the given array length. " \
-                                   + std::to_string(len)+" != " + std::to_string(arr_len));    
 }
 
 void RedisClient::IntArrayToString(int* intarr, int arr_len, std::string& str, char delimiter) {
@@ -512,35 +524,50 @@ void RedisClient::IntArrayToString(int* intarr, int arr_len, std::string& str, c
     {
         if (i > 0) str.push_back(delimiter);
         auto result = std::to_chars(buffer, buffer+sizeof(buffer),intarr[i]);
+        assert(result.ec == std::errc{} && "to_chars in IntArrayToString failed");
         str.append(buffer, result.ptr - buffer);
     }
     
 }
 
 void RedisClient::StringToDoubleArray(std::string& str, char delimiter, double* dbarr, int arr_len) {
-    std::string tstr = "";
-    double* ptr = dbarr;
-    // char delimiter = '.';
-    // std::cout << "dbarr: " << str << std::endl;
-    int len = 0;
-    for (size_t i = 0; i < str.size(); i++)
-    {
-        if(str[i] == delimiter )
-        {
-            *ptr = std::stod(tstr);
-            len += 1;
-            ptr++;
-            tstr = "";
-        }
-        else   
-            tstr += str[i];
-    }
+    // std::string tstr = "";
+    // double* ptr = dbarr;
+    // // char delimiter = '.';
+    // // std::cout << "dbarr: " << str << std::endl;
+    // int len = 0;
+    // for (size_t i = 0; i < str.size(); i++)
+    // {
+    //     if(str[i] == delimiter )
+    //     {
+    //         *ptr = std::stod(tstr);
+    //         len += 1;
+    //         ptr++;
+    //         tstr = "";
+    //     }
+    //     else   
+    //         tstr += str[i];
+    // }
 
-    *ptr = std::stod(tstr);
-    len += 1;
+    // *ptr = std::stod(tstr);
+    // len += 1;
     
-    if (len != arr_len )
-        throw std::runtime_error("Number of elements to convert to double doesn't match the given array length. " + std::to_string(len) + " != " + std::to_string(arr_len));    
+    // if (len != arr_len )
+    //     throw std::runtime_error("Number of elements to convert to double doesn't match the given array length. " + std::to_string(len) + " != " + std::to_string(arr_len));
+    
+
+    auto sptr = str.data();
+    auto eptr = sptr + str.length();
+
+    for (size_t i = 0; i < arr_len; i++)
+    {
+        auto tptr = sptr;
+        while (tptr < eptr && *tptr != delimiter) ++tptr;
+        auto result = std::from_chars(sptr, tptr, dbarr[i]);
+        assert(result.ec == std::errc{} && "from_chars in StringToDoubleArray failed");
+        sptr = tptr + 1;
+    }
+    
 }
 
 void RedisClient::DoubleArrayToString(double* dbarr, int arr_len, std::string& str, char delimiter) {
@@ -557,10 +584,11 @@ void RedisClient::DoubleArrayToString(double* dbarr, int arr_len, std::string& s
     str.clear();
     str.reserve( 33 * arr_len + 5);
     char buffer[32];
-    for (int i = 0; i < arr_len; i++)
+    for (int i = 0; i < arr_len; ++i)
     {
         if (i > 0) str.push_back(delimiter);
         auto result = std::to_chars(buffer, buffer+sizeof(buffer),dbarr[i]);
+        assert(result.ec == std::errc{} && "to_chars in DoubleArrayToString failed");
         str.append(buffer, result.ptr - buffer);
     }
     
